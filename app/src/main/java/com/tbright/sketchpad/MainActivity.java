@@ -13,11 +13,12 @@ import android.view.View;
 
 import com.tbright.sketchpad.utils.BitmapUtils;
 import com.tbright.sketchpad.view.PathView;
+import com.tbright.sketchpad.view.ScaleSketchView;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PICTURE_REQUEST_GALLERY_PERMISSION = 120;
     private static final int PICTURE_REQUEST_GALLERY = 110;
-    private PathView pathView;
+    private ScaleSketchView pathView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                 PICTURE_REQUEST_GALLERY_PERMISSION);
-        pathView = (PathView) findViewById(R.id.pathView);
+        pathView = (ScaleSketchView) findViewById(R.id.pathView);
     }
 
     @Override

@@ -14,7 +14,7 @@
 
         android:text="选择图片" />
 
-    <com.tbright.sketchpad.view.PathView
+    <com.tbright.sketchpad.view.ScaleSketchView
         android:id="@+id/pathView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
