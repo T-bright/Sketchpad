@@ -11,10 +11,9 @@
         android:onClick="selectPicture"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
         android:text="选择图片" />
 
-    <com.tbright.sketchpad.view.ScaleSketchView
+    <com.tbright.sketchpad.view.pinchimageview.PinchImageViewDemo
         android:id="@+id/pathView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
