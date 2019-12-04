@@ -14,11 +14,14 @@ import android.view.View;
 import com.tbright.sketchpad.utils.BitmapUtils;
 import com.tbright.sketchpad.view.PathView;
 import com.tbright.sketchpad.view.ScaleSketchView;
+import com.tbright.sketchpad.view.pinchimageview.PinchImageView;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PICTURE_REQUEST_GALLERY_PERMISSION = 120;
     private static final int PICTURE_REQUEST_GALLERY = 110;
     private ScaleSketchView pathView;
+    private PinchImageView one;
+    private PinchImageView two;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +30,16 @@ public class MainActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                 PICTURE_REQUEST_GALLERY_PERMISSION);
-        pathView = (ScaleSketchView) findViewById(R.id.pathView);
+//        pathView = (ScaleSketchView) findViewById(R.id.pathView);
+
+        one = (PinchImageView) findViewById(R.id.one);
+        two = (PinchImageView) findViewById(R.id.two);
+        one.addOuterMatrixChangedListener(new PinchImageView.OuterMatrixChangedListener() {
+            @Override
+            public void onOuterMatrixChanged(PinchImageView pinchImageView) {
+                two.outerMatrixTo(pinchImageView.getOuterMatrix(null),200);
+            }
+        });
     }
 
     @Override

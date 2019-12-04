@@ -26,11 +26,11 @@ import java.util.Queue;
 public class PinchImageView extends ImageView {
 
 
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        getParent().requestDisallowInterceptTouchEvent(true);
-        return super.dispatchTouchEvent(event);
-    }
+//    @Override
+//    public boolean dispatchTouchEvent(MotionEvent event) {
+//        getParent().requestDisallowInterceptTouchEvent(true);
+//        return super.dispatchTouchEvent(event);
+//    }
 
 ////////////////////////////////配置参数////////////////////////////////
 
@@ -192,6 +192,7 @@ public class PinchImageView extends ImageView {
         matrix.postConcat(mOuterMatrix);
         return matrix;
     }
+
 
     /**
      * 获取当前变换后的图片位置和尺寸
