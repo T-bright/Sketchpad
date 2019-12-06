@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
@@ -18,6 +19,7 @@ import android.view.View;
 import android.widget.Toast;
 
 
+import com.blankj.utilcode.util.ScreenUtils;
 import com.tbright.sketchpad.R;
 
 import java.util.LinkedList;
@@ -45,27 +47,32 @@ public class EinkHomeworkView extends View {
     private int currentMode = CORRECT_MODE;
 
     //屏幕的宽高
-    private int screenWidth = 2400;
-    private int screenHeight = 1080;
+    private int screenWidth = ScreenUtils.getScreenWidth();
+    private int screenHeight = ScreenUtils.getScreenHeight();
     //最下层的试卷图片
     private Bitmap testPaperBitmap;
+
+    //学生作答图片。放在试卷图片上面
+    private Bitmap mStudentAnswerBitmap;
+
     //擦除画笔
     private Paint mErasurePaint;
     //擦除路径
     private Path mErasurePath;
 
     //老师批阅之后的原图片
-    private Bitmap srcBitmapTeacherCorrect;
+//    private Bitmap srcBitmapTeacherCorrect;
     //老师批阅的图片，经过适配当前屏幕之后的图片
     private Bitmap dstBitmapTeacherCorrect;
     //绘制经过适配当前屏幕之后的老师批阅的图片canvas
     private Canvas mCanvasTeacherCorrect;
-
+    private PointF mOffset = new PointF(0, 0);
     //记录位置
     private int mLastX;
     private int mLastY;
     //老师批阅的画笔
     private Paint mCorrectPaint;
+    private float mScale = 1.0f;
 
 
     public EinkHomeworkView(Context context) {
@@ -83,8 +90,8 @@ public class EinkHomeworkView extends View {
 
 
     private void init() {
-        initTestPaperBitmap();
         initTeacherCorrect();
+        initTestPaperBitmap();
         initTestPaperRect();
     }
 
@@ -92,10 +99,14 @@ public class EinkHomeworkView extends View {
     //初始化试卷图片
     private void initTestPaperBitmap() {
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.aa);
-        int bitmapHeight =getBitmapHeights(bitmap);
-        testPaperBitmap = Bitmap.createBitmap(screenWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
-        Canvas testPaperCanvas = new Canvas(testPaperBitmap);
-        testPaperCanvas.drawBitmap(bitmap, null, new RectF(0, 0, screenWidth, bitmapHeight), null);
+//        int bitmapHeight =getBitmapHeights(bitmap);
+//        testPaperBitmap = Bitmap.createBitmap(screenWidth, dstBitmapTeacherCorrect.getHeight(), Bitmap.Config.ARGB_4444);
+//        Canvas testPaperCanvas = new Canvas(testPaperBitmap);
+//        testPaperCanvas.drawBitmap(bitmap, null, new RectF(0, 0, screenWidth, dstBitmapTeacherCorrect.getHeight()), null);
+
+//        testPaperBitmap = Bitmap.createBitmap(2400, 3396, Bitmap.Config.ARGB_4444);
+//        Canvas testPaperCanvas = new Canvas(testPaperBitmap);
+//        testPaperCanvas.drawBitmap(bitmap, null, new RectF(0, 54, 2400, 3450), null);
     }
 
     //初始化老师的批阅层
@@ -107,7 +118,7 @@ public class EinkHomeworkView extends View {
         mErasurePaint.setStrokeCap(Paint.Cap.ROUND);
         mErasurePaint.setStrokeJoin(Paint.Join.ROUND);
         mErasurePaint.setStyle(Paint.Style.STROKE);
-        mErasurePaint.setStrokeWidth(30);
+        mErasurePaint.setStrokeWidth(50);
         mErasurePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
 
         //老师批阅的时的批注画笔
@@ -117,20 +128,75 @@ public class EinkHomeworkView extends View {
         mCorrectPaint.setStrokeCap(Paint.Cap.ROUND);
         mCorrectPaint.setStrokeJoin(Paint.Join.ROUND);
         mCorrectPaint.setStyle(Paint.Style.STROKE);
-        mCorrectPaint.setStrokeWidth(30);
+        mCorrectPaint.setStrokeWidth(2);
 
-        //通过资源文件创建Bitmap对象
-        srcBitmapTeacherCorrect = BitmapFactory.decodeResource(getResources(), R.mipmap.aab);
-        int dstBitmapTeacherCorrectHeight = getBitmapHeights(srcBitmapTeacherCorrect);
-        dstBitmapTeacherCorrect = Bitmap.createBitmap(screenWidth, dstBitmapTeacherCorrectHeight, Bitmap.Config.ARGB_8888);
-        //双缓冲,装载画布
-        mCanvasTeacherCorrect = new Canvas(dstBitmapTeacherCorrect);
-        mCanvasTeacherCorrect.drawBitmap(srcBitmapTeacherCorrect, null, new RectF(0, 0, screenWidth, dstBitmapTeacherCorrectHeight), null);
+//        //通过资源文件创建Bitmap对象
+        Bitmap srcBitmapTeacherCorrect = BitmapFactory.decodeResource(getResources(), R.mipmap.aab);
+//        setTeacherCorrectCanvas(srcBitmapTeacherCorrect);
     }
 
-    private int getBitmapHeights( Bitmap bitmap){
+    private void setTeacherCorrectCanvas(Bitmap srcBitmap) {
+        int dstBitmapTeacherCorrectHeight = getBitmapHeights(srcBitmap);
+        dstBitmapTeacherCorrect = Bitmap.createBitmap(screenWidth, dstBitmapTeacherCorrectHeight, Bitmap.Config.ARGB_4444);
+        //双缓冲,装载画布
+        mCanvasTeacherCorrect = new Canvas(dstBitmapTeacherCorrect);
+        mCanvasTeacherCorrect.drawBitmap(srcBitmap, null, new RectF(0, 0, screenWidth, dstBitmapTeacherCorrectHeight), null);
+    }
+
+    /**
+     * 添加图片
+     *
+     * @param examPaperBitmap
+     * @param studentAnswerBitmap
+     * @param teacherCorrectBitmap
+     * @param deviceWidth
+     * @param deviceHeight
+     */
+    public void addBitmap(Bitmap examPaperBitmap, Bitmap studentAnswerBitmap, Bitmap teacherCorrectBitmap, int deviceWidth, int deviceHeight, float zoom) {
+
+        if (examPaperBitmap != null) {
+            if (studentAnswerBitmap != null) {
+                deviceWidth = studentAnswerBitmap.getWidth();
+                deviceHeight = studentAnswerBitmap.getHeight();
+            }
+            float scale = 1.0f * screenWidth / deviceWidth;
+            //进行等比缩放
+            int examPaperBitmapWidth = (int) (examPaperBitmap.getWidth() / zoom * scale);
+            int examPaperBitmapHeight = (int) (examPaperBitmap.getHeight() / zoom * scale);
+            testPaperBitmap = Bitmap.createBitmap(examPaperBitmapWidth, examPaperBitmapHeight, Bitmap.Config.ARGB_4444);
+            float left = (screenWidth - examPaperBitmapWidth) / 2.0f;
+            float top = (deviceHeight * scale - examPaperBitmapHeight) / 2.0f;
+            float right = examPaperBitmapWidth - left;
+            float bottom = examPaperBitmapHeight - top;
+            Canvas testPaperCanvas = new Canvas(testPaperBitmap);
+            testPaperCanvas.drawBitmap(examPaperBitmap, null, new RectF(left, top, right, bottom), null);
+        }
+        if (studentAnswerBitmap != null) {
+            int studentAnswerBitmapWidth = studentAnswerBitmap.getWidth();
+            int studentAnswerBitmapHeight = studentAnswerBitmap.getHeight();
+            float scale = 1.0f * screenWidth / studentAnswerBitmapWidth;
+            int afterScaleHeight = (int) (studentAnswerBitmapHeight * scale);
+            mStudentAnswerBitmap = Bitmap.createBitmap(screenWidth, afterScaleHeight, Bitmap.Config.ARGB_4444);
+            Canvas studentAnswerBitmapCanvas = new Canvas(mStudentAnswerBitmap);
+            studentAnswerBitmapCanvas.drawBitmap(studentAnswerBitmap, null, new RectF(0, 0, screenWidth, afterScaleHeight), null);
+        }
+        if (teacherCorrectBitmap != null) {
+            setTeacherCorrectCanvas(teacherCorrectBitmap);
+        }
+        invalidate();
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        if (dstBitmapTeacherCorrect != null) {
+            setMeasuredDimension(screenWidth, dstBitmapTeacherCorrect.getHeight());
+        }
+    }
+
+    private int getBitmapHeights( Bitmap bitmap) {
         int bitmapWidth = bitmap.getWidth();
-        float widthScale = screenWidth*1.0f/bitmapWidth*1.0f;
+        float widthScale = screenWidth * 1.0f / bitmapWidth * 1.0f;
         return (int) (bitmap.getHeight() * widthScale);
     }
 
@@ -152,44 +218,116 @@ public class EinkHomeworkView extends View {
         testPaperRectPaint.setStrokeJoin(Paint.Join.ROUND);
         testPaperRectPaint.setStyle(Paint.Style.STROKE);
         testPaperRectPaint.setStrokeWidth(4);
-        testPaperRectPath.addRect(200,200,400,400, Path.Direction.CW);
+        testPaperRectPath.addRect(200, 200, 400, 400, Path.Direction.CW);
 
         testPaperRectRegion = new Region();
-        testPaperRectRegion.set(200,200,400,400);
+        testPaperRectRegion.set(200, 200, 400, 400);
     }
 
+    private boolean isPause = false;
+
+    public void pause(boolean isPause) {
+        this.isPause = isPause;
+    }
+
+    //这里绘制多张图片会有很严重的卡顿，所以当手指抬起的时候，将当前页面所有的绘制保存成一张图片。这样会很流畅。
+    //https://blog.csdn.net/u011814346/article/details/80665102 参考
+    private Bitmap bgBitmap = null;
+    private Canvas canvas;
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.drawBitmap(testPaperBitmap, 0, 0, null);//最底层的试卷
-        canvas.drawPath(testPaperRectPath,testPaperRectPaint);//话批阅框，可点击
-        canvas.drawBitmap(dstBitmapTeacherCorrect, 0, 0, null);//老师批阅层的图片
-        if (currentMode == CORRECT_MODE) {
+        super.onDraw(canvas);
+        this.canvas = canvas;
+        if (!isPause) {
+            if(currentMode == RASURE_MODE || currentMode ==CORRECT_MODE){
+                //绘制最底层试卷和学生作答的图片
+                drawExamAndStudent(canvas);
+                //绘制老师的批阅框
+                drawRectPath(canvas);
+                //绘制老师的批阅层
+                drawTeacherCorrect(canvas);
+            }else {
+                if(bgBitmap == null){
+                    bgBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_4444);
+                    Canvas tempCanvas = new Canvas(bgBitmap);
+                    //绘制最底层试卷和学生作答的图片
+                    drawExamAndStudent(tempCanvas);
+                    //绘制老师的批阅框
+                    drawRectPath(tempCanvas);
+                    //绘制老师的批阅层
+                    drawTeacherCorrect(tempCanvas);
+                }
+                canvas.drawBitmap(bgBitmap, 0, 0, null);
+            }
+//            if(bgBitmap == null){
+//
+//            }else {
+//                if(currentMode == RASURE_MODE || currentMode ==CORRECT_MODE){
+//                    //绘制最底层试卷和学生作答的图片
+//                    drawExamAndStudent(tempCanvas);
+//                    //绘制老师的批阅框
+//                    drawRectPath(tempCanvas);
+//                    //绘制老师的批阅层
+//                    drawTeacherCorrect(tempCanvas);
+//                    canvas.drawBitmap(bgBitmap, 0, 0, null);
+//                }else {
+//                    canvas.drawBitmap(bgBitmap, 0, 0, null);
+//                }
+//            }
+        }
+    }
+
+    //绘制最底层试卷和学生作答的图片
+    private void drawExamAndStudent(Canvas canvas){
+        if (testPaperBitmap != null) {
+            canvas.drawBitmap(testPaperBitmap, 0, 0, null);//最底层的试卷
+        }
+        if (mStudentAnswerBitmap != null) {
+            canvas.drawBitmap(mStudentAnswerBitmap, 0, 0, null);//学生作答的图片
+        }
+    }
+    //绘制老师的批阅框
+    private void drawRectPath(Canvas canvas){
+        canvas.drawPath(testPaperRectPath, testPaperRectPaint);//话批阅框，可点击
+    }
+    //绘制老师批阅层
+    private void drawTeacherCorrect(Canvas canvas){
+        if (dstBitmapTeacherCorrect != null) {
+            canvas.drawBitmap(dstBitmapTeacherCorrect, 0, 0, null);//老师批阅层的图片
+        }
+        if (mCanvasTeacherCorrect != null) {
             for (Path path : mCorrectList) { // 绘制老师批注轨迹，这个轨迹也是绘制在老师批阅层的图片上的
                 mCanvasTeacherCorrect.drawPath(path, mCorrectPaint);
             }
+            if (currentMode == RASURE_MODE && mErasurePath != null && mErasurePaint != null) {
+                mCanvasTeacherCorrect.drawPath(mErasurePath, mErasurePaint);
+            }
         }
-        drawText(canvas);
-    }
-    private void drawText(Canvas canvas){
-
     }
     //当前老师批阅的路径集合
     private LinkedList<Path> mCorrectList = new LinkedList<Path>();
     //当前老师批阅的路径
     private Path mCurrentCorrectPath;
-//    private boolean isScale = false;
+
+    //是否按下
+    private boolean isActionDown = false;
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        float x = (event.getX() - mOffset.x) / mScale;
+        float y = (event.getY() - mOffset.y) / mScale;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mLastX = (int) event.getX();
-                mLastY = (int) event.getY();
-                if(event.getPointerCount() == 1){
+                isActionDown = true;
+//                mLastX = (int) event.getX();
+//                mLastY = (int) event.getY();
+                mLastX = (int) x;
+                mLastY = (int) y;
+                if (event.getPointerCount() == 1) {
                     if (currentMode == RASURE_MODE) {
                         //这里的擦除路径必须每次都要重新生成
                         mErasurePath = new Path();
                         mErasurePath.moveTo(mLastX, mLastY);
-                    } else if(currentMode == CORRECT_MODE){
+                    } else if (currentMode == CORRECT_MODE) {
                         mCurrentCorrectPath = new Path();
                         mCurrentCorrectPath.moveTo(mLastX, mLastY);
                         mCorrectList.add(mCurrentCorrectPath);
@@ -197,26 +335,33 @@ public class EinkHomeworkView extends View {
                 }
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
-//                isScale = true;
+                if (currentMode == RASURE_MODE) {
+                    if (mErasurePath != null) {
+                        mErasurePath.reset();
+                    }
+                } else if (currentMode == CORRECT_MODE) {
+                    if (mCurrentCorrectPath != null) {
+                        mCorrectList.remove(mCurrentCorrectPath);
+                        mCurrentCorrectPath.reset();
+                    }
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
-//                if(isScale){
-//                    return false;
-//                }
-                Log.e("AAA","einkHomeworkView :ACTION_MOVE");
-                if(event.getPointerCount() == 1){
+                if (event.getPointerCount() == 1) {
                     if (currentMode == RASURE_MODE) {
                         mErasurePath.lineTo(mLastX, mLastY);
-                        mCanvasTeacherCorrect.drawPath(mErasurePath, mErasurePaint);
-                    } else if(currentMode == CORRECT_MODE){
-                        mCurrentCorrectPath.quadTo(mLastX,mLastY,(event.getX() + mLastX) / 2,(event.getY() + mLastY) / 2);
-                    }else {
-
+//                        mCanvasTeacherCorrect.drawPath(mErasurePath, mErasurePaint);
+                        Log.e("AAA", "正在擦除--------");
+                    } else if (currentMode == CORRECT_MODE) {
+                        mCurrentCorrectPath.quadTo(mLastX, mLastY, (x + mLastX) / 2, (y + mLastY) / 2);
+                        Log.e("AAA", "正在绘制--------");
+                    } else {
+                        Log.e("AAA", "正在移动--------");
                     }
-                    mLastX = (int) event.getX();
-                    mLastY = (int) event.getY();
+                    mLastX = (int) x;
+                    mLastY = (int) y;
 
-                }else {
+                } else {
                     mCurrentCorrectPath.reset();
                     mErasurePath.reset();
                 }
@@ -228,11 +373,10 @@ public class EinkHomeworkView extends View {
 //                    mCurrentCorrectPath.reset();
 //                    isScale = false;
 //                }
-                if(testPaperRectRegion.contains(mLastX,mLastY)){
-                    Toast.makeText(getContext(),"被点击了", Toast.LENGTH_LONG).show();
+                isActionDown = false;
+                if (testPaperRectRegion.contains(mLastX, mLastY)) {
+                    Toast.makeText(getContext(), "被点击了", Toast.LENGTH_LONG).show();
                 }
-                mCurrentCorrectPath = null;
-                mErasurePath = null;
                 break;
             default:
                 break;
@@ -254,7 +398,28 @@ public class EinkHomeworkView extends View {
     public void setCurrentMode(int currentMode) {
         this.currentMode = currentMode;
         if (currentMode == RASURE_MODE) {//擦除模式
-            mCorrectList.clear();
+            Log.e("AAA", "进入擦除模式");
+//            mCorrectList.clear();
+        } else if(currentMode == MOVE_MODE){
+//            if(getWidth() == 0){
+//                return;
+//            }
+//            bgBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_4444);
+//            Canvas tempCanvas = new Canvas(bgBitmap);
+//            //绘制最底层试卷和学生作答的图片
+//            drawExamAndStudent(tempCanvas);
+//            //绘制老师的批阅框
+//            drawRectPath(tempCanvas);
+//            //绘制老师的批阅层
+//            drawTeacherCorrect(tempCanvas);
+//            canvas.drawBitmap(bgBitmap, 0, 0, null);
+            bgBitmap = null;
         }
+    }
+
+    public void setScaleAndOffset(float scaleX, float mMatrixValu, float mMatrixValu1) {
+        mScale = scaleX;
+        mOffset.x = mMatrixValu;
+        mOffset.y = mMatrixValu1;
     }
 }

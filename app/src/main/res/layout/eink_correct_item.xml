@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.magicpie.app.function.einktask.widget.ScaleEinkHomeworkView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="2400px"
+    android:id="@+id/einkHomeworkView"
+    android:layout_height="wrap_content">
+
+</com.magicpie.app.function.einktask.widget.ScaleEinkHomeworkView>

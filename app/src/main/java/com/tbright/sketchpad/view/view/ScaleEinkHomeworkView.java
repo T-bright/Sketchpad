@@ -1,6 +1,7 @@
 package com.tbright.sketchpad.view.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -41,11 +42,24 @@ public class ScaleEinkHomeworkView extends FrameLayout {
         addView(einkHomeworkView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+//        setMeasuredDimension(2400,3503.6f);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
     //是不是多手指触摸屏幕
     private boolean isMoreFingers = false;
     //记录位置
     private int mLastX;
     private int mLastY;
+    /**
+     * 是否拦截父容器的事件
+     * isIntercept : true.拦截父容器（就是子类需要当前的事件，让父类不要拦截事件），false.不拦截父类（就是子类不需要当前的事件，让父类自行处理）
+     */
+    private void isInterceptParentTouchEvent(boolean isIntercept){
+        getParent().requestDisallowInterceptTouchEvent(isIntercept);
+    }
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         switch (ev.getAction() & MotionEvent.ACTION_MASK) {
@@ -53,7 +67,7 @@ public class ScaleEinkHomeworkView extends FrameLayout {
                 mLastX = (int) ev.getX();
                 mLastY = (int) ev.getY();
                 if (ev.getPointerCount() == 1 && (currentMode == EinkHomeworkView.CORRECT_MODE || currentMode == EinkHomeworkView.RASURE_MODE)) {
-                    Log.e("AAA","ScaleEinkHomeworkView :ACTION_DOWN");
+                    isInterceptParentTouchEvent(true);
                     return einkHomeworkView.onTouchEvent(ev);
                 }
 
@@ -62,6 +76,7 @@ public class ScaleEinkHomeworkView extends FrameLayout {
                     mOldDistance = spacingOfTwoFinger(ev);
                     mOldPointer = middleOfTwoFinger(ev);
                     isMoreFingers = true;
+                    isInterceptParentTouchEvent(true);
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -72,22 +87,28 @@ public class ScaleEinkHomeworkView extends FrameLayout {
                         einkHomeworkView.setY(einkHomeworkView.getY() + ev.getY() -mLastY);
                         mLastX = (int) ev.getX();
                         mLastY = (int) ev.getY();
+                        isInterceptParentTouchEvent(false);
                         checkingBorder();
                     } else {
                         Log.e("AAA","ScaleEinkHomeworkView :ACTION_MOVE");
+                        isInterceptParentTouchEvent(true);
                         return einkHomeworkView.onTouchEvent(ev);
                     }
                 } else if(ev.getPointerCount() == 2){
                     //两个或以上手指的时候，放大、缩小、滑动
+                    isInterceptParentTouchEvent(true);
                     try {
+                        PointF mNewPointer = middleOfTwoFinger(ev);
+
                         float newDistance = spacingOfTwoFinger(ev);
                         scaleFactor = newDistance / mOldDistance;
                         scaleFactor = checkingScale(einkHomeworkView.getScaleX(), scaleFactor);
                         einkHomeworkView.setScaleX(einkHomeworkView.getScaleX() * scaleFactor);
                         einkHomeworkView.setScaleY(einkHomeworkView.getScaleY() * scaleFactor);
+                        einkHomeworkView.setPivotX(mNewPointer.x);
+                        einkHomeworkView.setPivotY(mNewPointer.y);
                         mOldDistance = newDistance;
 
-                        PointF mNewPointer = middleOfTwoFinger(ev);
                         einkHomeworkView.setX(einkHomeworkView.getX() + mNewPointer.x - mOldPointer.x);
                         einkHomeworkView.setY(einkHomeworkView.getY() + mNewPointer.y - mOldPointer.y);
                         mOldPointer = mNewPointer;
@@ -105,12 +126,17 @@ public class ScaleEinkHomeworkView extends FrameLayout {
                 break;
             case MotionEvent.ACTION_UP:
                 isMoreFingers = false;
+                einkHomeworkView.getMatrix().getValues(mMatrixValus);
+                einkHomeworkView.setScaleAndOffset(einkHomeworkView.getScaleX(), mMatrixValus[2], mMatrixValus[5]);
+                isInterceptParentTouchEvent(false);
                 break;
         }
         return true;
     }
 
-    private int currentMode = EinkHomeworkView.MOVE_MODE;
+
+
+    private int currentMode = EinkHomeworkView.CORRECT_MODE;
 
     public void setCurrentMode(int currentMode) {
         this.currentMode = currentMode;
@@ -186,5 +212,12 @@ public class ScaleEinkHomeworkView extends FrameLayout {
             }
         }
         return offset;
+    }
+    public void pause(boolean isPause){
+        einkHomeworkView.pause(isPause);
+    }
+
+    public void addBitmap(Bitmap examPaperBitmap, Bitmap studentAnswerBitmap, Bitmap teacherCorrectBitmap, int deviceWidth, int deviceHeight, float zoom) {
+        einkHomeworkView.addBitmap(examPaperBitmap,studentAnswerBitmap,teacherCorrectBitmap,deviceWidth,deviceHeight,zoom);
     }
 }
