@@ -1,5 +1,7 @@
 package com.tbright.sketchpad.listactivity.bean;
 
+import android.graphics.Bitmap;
+
 import java.util.List;
 
 public class EinkHomeworkViewBean {
@@ -46,12 +48,20 @@ public class EinkHomeworkViewBean {
          * studentAnswerImagePath :
          * teacherCorrectImagePath :
          */
-
+        private Bitmap teacherCorrectBitmapTemp;
         private String exampaperImagePath;
         private int pageIndex;
         private String studentAnswerImagePath;
         private String teacherCorrectImagePath;
         private List<InputRectsBean> inputRects;
+
+        public Bitmap getTeacherCorrectBitmap() {
+            return teacherCorrectBitmapTemp;
+        }
+
+        public void setTeacherCorrectBitmap(Bitmap teacherCorrectBitmap) {
+            this.teacherCorrectBitmapTemp = teacherCorrectBitmap;
+        }
 
         public String getExampaperImagePath() {
             return exampaperImagePath;

@@ -38,8 +38,7 @@ public class ScaleEinkHomeworkView extends FrameLayout {
     }
 
     private void init(Context context) {
-        einkHomeworkView = new EinkHomeworkView(context);
-        addView(einkHomeworkView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+
     }
 
     @Override
@@ -136,11 +135,13 @@ public class ScaleEinkHomeworkView extends FrameLayout {
 
 
 
-    private int currentMode = EinkHomeworkView.CORRECT_MODE;
+    private int currentMode = EinkHomeworkView.MOVE_MODE;
 
     public void setCurrentMode(int currentMode) {
         this.currentMode = currentMode;
-        einkHomeworkView.setCurrentMode(currentMode);
+        if(einkHomeworkView != null){
+            einkHomeworkView.setCurrentMode(currentMode);
+        }
     }
 
     /**
@@ -214,10 +215,14 @@ public class ScaleEinkHomeworkView extends FrameLayout {
         return offset;
     }
     public void pause(boolean isPause){
-        einkHomeworkView.pause(isPause);
+//        einkHomeworkView.pause(isPause);
     }
 
     public void addBitmap(Bitmap examPaperBitmap, Bitmap studentAnswerBitmap, Bitmap teacherCorrectBitmap, int deviceWidth, int deviceHeight, float zoom) {
-        einkHomeworkView.addBitmap(examPaperBitmap,studentAnswerBitmap,teacherCorrectBitmap,deviceWidth,deviceHeight,zoom);
+//        ContainView containView = new ContainView(getContext(),examPaperBitmap,studentAnswerBitmap);
+//        addView(containView);
+        einkHomeworkView = new EinkHomeworkView(getContext());
+        addView(einkHomeworkView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+//        einkHomeworkView.addBitmap(examPaperBitmap,studentAnswerBitmap,teacherCorrectBitmap,deviceWidth,deviceHeight,zoom);
     }
 }

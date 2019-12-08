@@ -1,66 +1,110 @@
 package com.tbright.sketchpad.listactivity;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import com.alibaba.fastjson.JSON;
+import com.blankj.utilcode.util.FileIOUtils;
+import com.blankj.utilcode.util.ZipUtils;
+import com.tbright.sketchpad.BaseApplication;
+import com.tbright.sketchpad.R;
+import com.tbright.sketchpad.listactivity.bean.EinkHomeworkViewBean;
+import com.tbright.sketchpad.listactivity.bean.MetaBean;
+import com.tbright.sketchpad.listactivity.bean.NoteBookBean;
+import com.tbright.sketchpad.listactivity.bean.PageConfigure;
+import com.tbright.sketchpad.utils.EinkFileUtils;
+
+import java.util.ArrayList;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+
 public class ListPresenter {
     /**
      * 下载试卷的缓存文件夹目录
      * files
-     *     -userId ：用户名Id
-     *       -taskId ：任务Id
-     *         -zip :存放当前taskId的试卷、学生 作答、老师批阅的信息
-     *         -unzip ：解压的，目录名对应zip
+     * -userId ：用户名Id
+     * -taskId ：任务Id
+     * -zip :存放当前taskId的试卷、学生 作答、老师批阅的信息
+     * -unzip ：解压的，目录名对应zip
      */
-    fun downloadTestPaper(taskId: String, noteBookId: String) {
+    public void downloadTestPaper(final String taskId, String noteBookId, final ResultListener resultListener) {
 
 //        einkHomeworkView.setCurrentMode(currentMode)
 //        einkHomeworkView.addBitmap(BitmapFactory.decodeFile(item.exampaperImagePath),BitmapFactory.decodeFile(item.studentAnswerImagePath),BitmapFactory.decodeFile(item.teacherCorrectImagePath),822,1200,1.1435f)
-
-        var ss = Observable.create<String> {
-                EinkFileUtils.saveRawToDataPath(BaseApplication.instance, R.raw.taskid, EinkFileUtils.getZipFileAbsolutePath(taskId, "712424997901045760.zip"))
-                EinkFileUtils.saveRawToDataPath(BaseApplication.instance, R.raw.notebooks, EinkFileUtils.getZipFileAbsolutePath(taskId, "notebooks.zip"))
-                it.onNext("1")
-        }
-                .map {
-            //解压试卷
-            ZipUtils.unzipFile(EinkFileUtils.getZipFileAbsolutePath(taskId, "712424997901045760.zip"), EinkFileUtils.getUnZipFileAbsolutePath("712424997901045760", ""))
-            //解压学生作答和老师批阅
-            ZipUtils.unzipFile(EinkFileUtils.getZipFileAbsolutePath(taskId, "notebooks.zip"), EinkFileUtils.getUnZipFileAbsolutePath("712424997901045760", ""))
-            return@map ""
-        }
-                .map {
-            //试卷的meta信息
-            var metaStr = FileIOUtils.readFile2String(EinkFileUtils.getPath(taskId, "712424997901045760/meta.dat", "unzip"))
-            val metaObject = JSON.parseObject(metaStr, MetaBean::class.java)
-            //notebook信息
-            var notebookStr = FileIOUtils.readFile2String(EinkFileUtils.getPath(taskId, "notebooks/712425681283190784/notebook.dat", "unzip"))
-            val noteBookObject = JSON.parseObject(notebookStr, NoteBookBean::class.java)
-
-            val einkHomeworkViewBean = EinkHomeworkViewBean()
-            einkHomeworkViewBean.totalScore = metaObject.taskInfo.score.toString()
-            einkHomeworkViewBean.totalPageNum = metaObject.answerPaper.answerSheetPages.size
-            var paperListBeans = arrayListOf<EinkHomeworkViewBean.PaperListBean>()
-            einkHomeworkViewBean.paperList = paperListBeans
-            for (index in metaObject.answerPaper.answerSheetPages.indices) {
-                var paperListBean = EinkHomeworkViewBean.PaperListBean()
-                paperListBean.pageIndex = index + 1
-                paperListBean.exampaperImagePath = EinkFileUtils.getPath(taskId, "712424997901045760/${metaObject.answerPaper.answerSheetPages[index]}", "unzip")
-
-                var configureStrPath = EinkFileUtils.getPath(taskId, "notebooks/${noteBookObject.notepages[index].notebookId}/pages/${noteBookObject.notepages[index].notepageId}/configure.dat", "unzip")
-                var configureStr = FileIOUtils.readFile2String(configureStrPath)
-                var configureObject = JSON.parseObject(configureStr, PageConfigure::class.java)
-
-                if (configureObject.layers.size == 1) {
-                    paperListBean.studentAnswerImagePath = EinkFileUtils.getPath(taskId, "notebooks/${noteBookObject.notepages[index].notebookId}/pages/${noteBookObject.notepages[index].notepageId}//${configureObject.layers[0].layerName}/note.png", "unzip")
-                } else if (configureObject.layers.size == 2) {
-                    paperListBean.studentAnswerImagePath = EinkFileUtils.getPath(taskId, "notebooks/${noteBookObject.notepages[index].notebookId}/pages/${noteBookObject.notepages[index].notepageId}//${configureObject.layers[0].layerName}/note.png", "unzip")
-                    paperListBean.teacherCorrectImagePath = EinkFileUtils.getPath(taskId, "notebooks/${noteBookObject.notepages[index].notebookId}/pages/${noteBookObject.notepages[index].notepageId}//${configureObject.layers[1].layerName}/note.png", "unzip")
-                }
-                paperListBeans.add(paperListBean)
+        Disposable ss = Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> e) throws Exception {
+                EinkFileUtils.saveRawToDataPath(BaseApplication.instance,
+                        R.raw.taskid, EinkFileUtils.getZipFileAbsolutePath(taskId, "712424997901045760.zip"));
+                EinkFileUtils.saveRawToDataPath(BaseApplication.instance,
+                        R.raw.notebooks, EinkFileUtils.getZipFileAbsolutePath(taskId, "notebooks.zip"));
+                e.onNext("");
             }
-            return@map paperListBeans
-        }
-                .compose(RxSchedulers.compose())
-                .subscribe {
-            mView?.showCurrentStudent(it)
-        }
+        }).map(new Function<String, String>() {
+            @Override
+            public String apply(String s) throws Exception {
+                //解压试卷
+                ZipUtils.unzipFile(EinkFileUtils.getZipFileAbsolutePath(taskId, "712424997901045760.zip"), EinkFileUtils.getUnZipFileAbsolutePath("712424997901045760", ""));
+                //解压学生作答和老师批阅
+                ZipUtils.unzipFile(EinkFileUtils.getZipFileAbsolutePath(taskId, "notebooks.zip"), EinkFileUtils.getUnZipFileAbsolutePath("712424997901045760", ""));
+                return "";
+            }
+        }).map(new Function<String,ArrayList<EinkHomeworkViewBean.PaperListBean>>() {
+            @Override
+            public ArrayList<EinkHomeworkViewBean.PaperListBean> apply(String s) throws Exception {
+                //试卷的meta信息
+                String metaStr = FileIOUtils.readFile2String(EinkFileUtils.getPath(taskId, "712424997901045760/meta.dat", "unzip"));
+                MetaBean metaObject = JSON.parseObject(metaStr, MetaBean.class);
+                //notebook信息
+                String notebookStr = FileIOUtils.readFile2String(EinkFileUtils.getPath(taskId, "notebooks/712425681283190784/notebook.dat", "unzip"));
+                NoteBookBean noteBookObject = JSON.parseObject(notebookStr, NoteBookBean.class);
+
+                EinkHomeworkViewBean einkHomeworkViewBean = new EinkHomeworkViewBean();
+                einkHomeworkViewBean.setTotalScore(String.valueOf(metaObject.getTaskInfo().getScore()));
+                einkHomeworkViewBean.setTotalPageNum(metaObject.getAnswerPaper().getAnswerSheetPages().size());
+                ArrayList paperListBeans = new ArrayList<EinkHomeworkViewBean.PaperListBean>();
+                einkHomeworkViewBean.setPaperList(paperListBeans);
+
+                for (int index = 0; index < metaObject.getAnswerPaper().getAnswerSheetPages().size(); index++) {
+                    EinkHomeworkViewBean.PaperListBean paperListBean = new EinkHomeworkViewBean.PaperListBean();
+                    paperListBean.setPageIndex(index + 1);
+                    paperListBean.setExampaperImagePath(EinkFileUtils.getPath(taskId, "712424997901045760/"+metaObject.getAnswerPaper().getAnswerSheetPages().get(index), "unzip"));
+
+                    String configureStrPath = EinkFileUtils.getPath(taskId, "notebooks/"+noteBookObject.getNotepages().get(index).getNotebookId()+"/pages/"+noteBookObject.getNotepages().get(index).getNotepageId()+"/configure.dat", "unzip");
+                    String configureStr = FileIOUtils.readFile2String(configureStrPath);
+                    PageConfigure configureObject = JSON.parseObject(configureStr, PageConfigure.class);
+
+                    if (configureObject.getLayers().size() == 1) {
+                        paperListBean.setStudentAnswerImagePath(
+                                EinkFileUtils.getPath(taskId,
+                                        "notebooks/"+noteBookObject.getNotepages().get(index).getNotebookId()+"/pages/"+noteBookObject.getNotepages().get(index).getNotepageId()+"/"+configureObject.getLayers().get(0).getLayerName()+"/note.png","unzip"));
+                        paperListBean.setTeacherCorrectBitmap(BitmapFactory.decodeResource(BaseApplication.instance.getResources(), R.mipmap.aab));
+                    } else if (configureObject.getLayers().size() == 2) {
+                        paperListBean.setStudentAnswerImagePath(EinkFileUtils.getPath(taskId,
+                                "notebooks/"+noteBookObject.getNotepages().get(index).getNotebookId()+"/pages/"+noteBookObject.getNotepages().get(index).getNotepageId()+"/"+configureObject.getLayers().get(0).getLayerName()+"/note.png", "unzip"));
+                        String bt = EinkFileUtils.getPath(taskId,
+                                "notebooks/"+noteBookObject.getNotepages().get(index).getNotebookId()+"/pages/"+noteBookObject.getNotepages().get(index).getNotepageId()+"/"+configureObject.getLayers().get(1).getLayerName()+"/note.png", "unzip");
+                        paperListBean.setTeacherCorrectImagePath(bt);
+                        paperListBean.setTeacherCorrectBitmap(BitmapFactory.decodeFile(bt));
+                    }
+                    paperListBeans.add(paperListBean);
+                }
+                return paperListBeans;
+            }
+        }).subscribe(new Consumer<ArrayList<EinkHomeworkViewBean.PaperListBean>>() {
+            @Override
+            public void accept(ArrayList<EinkHomeworkViewBean.PaperListBean> s) throws Exception {
+                resultListener.result(s);
+            }
+        });
+    }
+
+    public interface ResultListener{
+        void result(ArrayList<EinkHomeworkViewBean.PaperListBean> result);
     }
 }
