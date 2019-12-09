@@ -15,6 +15,7 @@ import com.tbright.sketchpad.listactivity.bean.PageConfigure;
 import com.tbright.sketchpad.utils.EinkFileUtils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -79,6 +80,12 @@ public class ListPresenter {
                     String configureStr = FileIOUtils.readFile2String(configureStrPath);
                     PageConfigure configureObject = JSON.parseObject(configureStr, PageConfigure.class);
 
+                    List<EinkHomeworkViewBean.PaperListBean.InputRectsBean> inputRects = JSON.parseArray(inputsRectStr, EinkHomeworkViewBean.PaperListBean.InputRectsBean.class);
+                    for(int i = 0;i< inputRects.size() ;i++){
+                        EinkHomeworkViewBean.PaperListBean.InputRectsBean inputRect = inputRects.get(i);
+//                            inputRect.
+                    }
+                    paperListBean.setInputRects(inputRects);
                     if (configureObject.getLayers().size() == 1) {
                         paperListBean.setStudentAnswerImagePath(
                                 EinkFileUtils.getPath(taskId,
@@ -103,8 +110,181 @@ public class ListPresenter {
             }
         });
     }
-
     public interface ResultListener{
         void result(ArrayList<EinkHomeworkViewBean.PaperListBean> result);
     }
+    private String inputsRectStr = "[\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209129816064\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 400,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 6,\n" +
+            "        \"top\": 200,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209159176192\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 700,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 7,\n" +
+            "        \"top\": 200,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209129816064\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 400,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 6,\n" +
+            "        \"top\": 400,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209159176192\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 700,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 7,\n" +
+            "        \"top\": 400,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209129816064\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 400,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 6,\n" +
+            "        \"top\": 600,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209159176192\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 700,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 7,\n" +
+            "        \"top\": 600,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209129816064\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 400,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 6,\n" +
+            "        \"top\": 800,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209159176192\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 700,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 7,\n" +
+            "        \"top\": 800,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209129816064\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 400,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 6,\n" +
+            "        \"top\": 1000,\n" +
+            "        \"width\": 200\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"examId\": \"708533208924295168\",\n" +
+            "        \"examInputId\": \"708533209113038848\",\n" +
+            "        \"exampaperId\": \"708532379576176640\",\n" +
+            "        \"exampaperRectId\": \"708533209159176192\",\n" +
+            "        \"height\": 100,\n" +
+            "        \"left\": 700,\n" +
+            "        \"pageIndex\": 1,\n" +
+            "        \"parentRectId\": 0,\n" +
+            "        \"rectContent\": \"\",\n" +
+            "        \"rectSequence\": 0,\n" +
+            "        \"rectStyle\": \"\",\n" +
+            "        \"rectStyleData\": \"\",\n" +
+            "        \"rectType\": 7,\n" +
+            "        \"top\": 1000,\n" +
+            "        \"width\": 200\n" +
+            "    }\n" +
+            "]";
+
+
 }

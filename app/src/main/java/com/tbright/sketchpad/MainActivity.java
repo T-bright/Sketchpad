@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void selectPicture(View view) {
-        int type = 3;
+        int type = 1;
         if(type == 1){
             startActivity(new Intent(this, ListActivity.class));
         }else if(type == 2){

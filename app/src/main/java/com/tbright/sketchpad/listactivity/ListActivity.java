@@ -90,7 +90,7 @@ public class ListActivity extends AppCompatActivity implements View.OnClickListe
             if (holder instanceof MyHolder) {
                 MyHolder myHolder = (MyHolder) holder;
                 EinkHomeworkViewBean.PaperListBean item = mResult.get(position);
-                myHolder.einkHomeworkView.addBitmap(BitmapFactory.decodeFile(item.getExampaperImagePath()), BitmapFactory.decodeFile(item.getStudentAnswerImagePath()), item.getTeacherCorrectBitmap(), 822, 1200, 1.1435f,item);
+                myHolder.einkHomeworkView.addBitmap(item);
                 myHolder.einkHomeworkView.setCurrentMode(mode);
             }
         }
