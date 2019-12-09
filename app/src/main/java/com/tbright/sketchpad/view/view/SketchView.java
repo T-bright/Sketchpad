@@ -185,6 +185,7 @@ public class SketchView extends View {
 
     //这里绘制多张图片会有很严重的卡顿，所以当手指抬起的时候，将当前页面所有的绘制保存成一张图片。这样会很流畅。
     //https://blog.csdn.net/u011814346/article/details/80665102 参考
+//    https://www.jianshu.com/p/772621ca71f9
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
