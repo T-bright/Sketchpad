@@ -72,6 +72,8 @@ public class SketchView extends View {
     private Paint mCorrectPaint;
     private float mScale = 1.0f;
     private PaintFlagsDrawFilter paintFlagsDrawFilter;
+    private Bitmap einkCorrectTrue;
+    private Bitmap einkCorrectFalse;
 
 
     public SketchView(Context context) {
@@ -84,13 +86,15 @@ public class SketchView extends View {
 
     public SketchView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
+        init(context);
     }
 
 
-    private void init() {
+    private void init(Context context) {
         initTeacherCorrect();
         initTestPaperRect();
+        einkCorrectTrue = BitmapFactory.decodeResource(context.getResources(),R.mipmap.eink_correct_true);
+        einkCorrectFalse = BitmapFactory.decodeResource(context.getResources(),R.mipmap.eink_correct_false);
     }
 
     //初始化老师的批阅层
@@ -198,6 +202,7 @@ public class SketchView extends View {
                 mCanvasTeacherCorrect.drawPath(path, mCorrectPaint);
             }
         }
+
         drawCorrectRect(canvas);
     }
 
@@ -207,7 +212,8 @@ public class SketchView extends View {
             List<EinkHomeworkViewBean.PaperListBean.InputRectsBean> inputRects = paperListBean.getInputRects();
             for (int i = 0; i < inputRects.size(); i++) {
                 EinkHomeworkViewBean.PaperListBean.InputRectsBean inputRect = inputRects.get(i);
-                canvas.drawRect(inputRect.getLeft(),inputRect.getTop(),inputRect.getLeft()+inputRect.getWidth(),inputRect.getTop()+inputRect.getHeight(),mCorrectPaint);
+                canvas.drawRect(inputRect.getExamInputRectF(),mCorrectPaint);
+                canvas.drawBitmap(einkCorrectTrue,null,inputRect.getExamInputImageRectF(), null);
             }
         }
     }
@@ -225,6 +231,19 @@ public class SketchView extends View {
             case MotionEvent.ACTION_DOWN:
                 mLastX = (int) x;
                 mLastY = (int) y;
+
+                if (paperListBean != null) {
+                    List<EinkHomeworkViewBean.PaperListBean.InputRectsBean> inputRects = paperListBean.getInputRects();
+                    for (int i = 0; i < inputRects.size(); i++) {
+                        EinkHomeworkViewBean.PaperListBean.InputRectsBean inputRect = inputRects.get(i);
+                        if(inputRect.getExamInputRectF().contains(mLastX,mLastY)){
+                            if(onClickCorrectRectListener != null){
+                                onClickCorrectRectListener.onClick(paperListBean);
+                            }
+                        }
+                    }
+                }
+
                 if (event.getPointerCount() == 1) {
                     if (currentMode == RASURE_MODE) {
                         //这里的擦除路径必须每次都要重新生成
@@ -296,5 +315,14 @@ public class SketchView extends View {
         mScale = scaleX;
         mOffset.x = mMatrixValu;
         mOffset.y = mMatrixValu1;
+    }
+
+    private OnClickCorrectRectListener onClickCorrectRectListener;
+
+    public interface OnClickCorrectRectListener{
+       void  onClick(EinkHomeworkViewBean.PaperListBean paperListBean);
+    }
+    public void setOnClickCorrectRectListener(OnClickCorrectRectListener onClickCorrectRectListener){
+        this.onClickCorrectRectListener = onClickCorrectRectListener;
     }
 }

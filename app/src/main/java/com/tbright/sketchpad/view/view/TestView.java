@@ -144,7 +144,7 @@ public class TestView extends FrameLayout {
                 isMoreFingers = false;
                 containView.getMatrix().getValues(mMatrixValus);
                 einkHomeworkView.setScaleAndOffset(containView.getScaleX(), mMatrixValus[2], mMatrixValus[5]);
-                isInterceptParentTouchEvent(false);
+//                isInterceptParentTouchEvent(false);
                 break;
         }
         return true;
@@ -259,5 +259,7 @@ public class TestView extends FrameLayout {
         }
         einkHomeworkView.addBitmap(paperListBean);
     }
-
+    public void setOnClickCorrectRectListener(SketchView.OnClickCorrectRectListener onClickCorrectRectListener){
+        einkHomeworkView.setOnClickCorrectRectListener(onClickCorrectRectListener);
+    }
 }

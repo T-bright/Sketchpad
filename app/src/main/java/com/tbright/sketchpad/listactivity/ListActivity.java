@@ -13,9 +13,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import com.blankj.utilcode.util.ToastUtils;
 import com.tbright.sketchpad.R;
 import com.tbright.sketchpad.listactivity.bean.EinkHomeworkViewBean;
 import com.tbright.sketchpad.view.view.ScaleEinkHomeworkView;
+import com.tbright.sketchpad.view.view.SketchView;
 import com.tbright.sketchpad.view.view.TestView;
 
 import java.util.ArrayList;
@@ -92,6 +94,12 @@ public class ListActivity extends AppCompatActivity implements View.OnClickListe
                 EinkHomeworkViewBean.PaperListBean item = mResult.get(position);
                 myHolder.einkHomeworkView.addBitmap(item);
                 myHolder.einkHomeworkView.setCurrentMode(mode);
+                myHolder.einkHomeworkView.setOnClickCorrectRectListener(new SketchView.OnClickCorrectRectListener() {
+                    @Override
+                    public void onClick(EinkHomeworkViewBean.PaperListBean paperListBean) {
+                        ToastUtils.showShort("被顶级了");
+                    }
+                });
             }
         }
 

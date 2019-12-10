@@ -2,12 +2,15 @@ package com.tbright.sketchpad.listactivity;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.RectF;
 
 import com.alibaba.fastjson.JSON;
 import com.blankj.utilcode.util.FileIOUtils;
 import com.blankj.utilcode.util.ZipUtils;
+import com.google.gson.Gson;
 import com.tbright.sketchpad.BaseApplication;
 import com.tbright.sketchpad.R;
+import com.tbright.sketchpad.listactivity.bean.AnswerBean;
 import com.tbright.sketchpad.listactivity.bean.EinkHomeworkViewBean;
 import com.tbright.sketchpad.listactivity.bean.MetaBean;
 import com.tbright.sketchpad.listactivity.bean.NoteBookBean;
@@ -15,6 +18,7 @@ import com.tbright.sketchpad.listactivity.bean.PageConfigure;
 import com.tbright.sketchpad.utils.EinkFileUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -55,7 +59,7 @@ public class ListPresenter {
                 ZipUtils.unzipFile(EinkFileUtils.getZipFileAbsolutePath(taskId, "notebooks.zip"), EinkFileUtils.getUnZipFileAbsolutePath("712424997901045760", ""));
                 return "";
             }
-        }).map(new Function<String,ArrayList<EinkHomeworkViewBean.PaperListBean>>() {
+        }).map(new Function<String, ArrayList<EinkHomeworkViewBean.PaperListBean>>() {
             @Override
             public ArrayList<EinkHomeworkViewBean.PaperListBean> apply(String s) throws Exception {
                 //试卷的meta信息
@@ -64,38 +68,80 @@ public class ListPresenter {
                 //notebook信息
                 String notebookStr = FileIOUtils.readFile2String(EinkFileUtils.getPath(taskId, "notebooks/712425681283190784/notebook.dat", "unzip"));
                 NoteBookBean noteBookObject = JSON.parseObject(notebookStr, NoteBookBean.class);
+                //学生作答的answer.dat
+                String answerStr = FileIOUtils.readFile2String(EinkFileUtils.getPath(taskId, "notebooks/712425681283190784/answer.dat", "unzip"));
+                AnswerBean answerObject = JSON.parseObject(notebookStr, AnswerBean.class);
+                Gson gson = new Gson();
+                answerObject = gson.fromJson(answerStr, AnswerBean.class);
+                AnswerBean.ExtInfoBean.PageMapBean mPageMapBean = null;
 
+                if (answerObject.getExtInfo().getPageMap() != null && answerObject.getExtInfo().getPageMap().size() != 0) {
+                    Collection<AnswerBean.ExtInfoBean.PageMapBean> values = answerObject.getExtInfo().getPageMap().values();
+                    //试卷的信息都是一样的。所以取一个就可以了。
+                    for (AnswerBean.ExtInfoBean.PageMapBean pageMapBean : values) {
+                        mPageMapBean = pageMapBean;
+                        break;
+                    }
+                }
                 EinkHomeworkViewBean einkHomeworkViewBean = new EinkHomeworkViewBean();
                 einkHomeworkViewBean.setTotalScore(String.valueOf(metaObject.getTaskInfo().getScore()));
                 einkHomeworkViewBean.setTotalPageNum(metaObject.getAnswerPaper().getAnswerSheetPages().size());
                 ArrayList paperListBeans = new ArrayList<EinkHomeworkViewBean.PaperListBean>();
                 einkHomeworkViewBean.setPaperList(paperListBeans);
+//                Bitmap einkCorrectFalse = BitmapFactory.decodeResource(BaseApplication.instance.getResources(),R.mipmap.eink_correct_false);
+                Bitmap einkCorrectTrue = BitmapFactory.decodeResource(BaseApplication.instance.getResources(), R.mipmap.eink_correct_true);
+                int einkCorrectTrueWidth = einkCorrectTrue.getWidth();
+                int einkCorrectTrueHeight = einkCorrectTrue.getHeight();
+
 
                 for (int index = 0; index < metaObject.getAnswerPaper().getAnswerSheetPages().size(); index++) {
                     EinkHomeworkViewBean.PaperListBean paperListBean = new EinkHomeworkViewBean.PaperListBean();
                     paperListBean.setPageIndex(index + 1);
-                    paperListBean.setExampaperImagePath(EinkFileUtils.getPath(taskId, "712424997901045760/"+metaObject.getAnswerPaper().getAnswerSheetPages().get(index), "unzip"));
+                    paperListBean.setExampaperImagePath(EinkFileUtils.getPath(taskId, "712424997901045760/" + metaObject.getAnswerPaper().getAnswerSheetPages().get(index), "unzip"));
 
-                    String configureStrPath = EinkFileUtils.getPath(taskId, "notebooks/"+noteBookObject.getNotepages().get(index).getNotebookId()+"/pages/"+noteBookObject.getNotepages().get(index).getNotepageId()+"/configure.dat", "unzip");
+                    String configureStrPath = EinkFileUtils.getPath(taskId, "notebooks/" + noteBookObject.getNotepages().get(index).getNotebookId() + "/pages/" + noteBookObject.getNotepages().get(index).getNotepageId() + "/configure.dat", "unzip");
                     String configureStr = FileIOUtils.readFile2String(configureStrPath);
                     PageConfigure configureObject = JSON.parseObject(configureStr, PageConfigure.class);
 
+                    paperListBean.setStudentAnswerDeviceWidth(mPageMapBean.getDevice().getWidth());
+                    paperListBean.setStudentAnswerDeviceHeight(mPageMapBean.getDevice().getHeight());
+                    paperListBean.setZoom(mPageMapBean.getPaper().getZoom());
+
+                    //TODO 这里将老师批阅框的坐标赋值
                     List<EinkHomeworkViewBean.PaperListBean.InputRectsBean> inputRects = JSON.parseArray(inputsRectStr, EinkHomeworkViewBean.PaperListBean.InputRectsBean.class);
-                    for(int i = 0;i< inputRects.size() ;i++){
+                    for (int i = 0; i < inputRects.size(); i++) {
+                        //TODO 做换算
                         EinkHomeworkViewBean.PaperListBean.InputRectsBean inputRect = inputRects.get(i);
-//                            inputRect.
+                        int inputRectWidth = inputRect.getWidth();
+                        int inputRectHeight = inputRect.getHeight();
+                        inputRect.setExamInputRectF(new RectF(inputRect.getLeft(), inputRect.getTop(), inputRect.getLeft() + inputRectWidth, inputRect.getTop() + inputRectHeight));//批阅框的坐标
+                        if (inputRectWidth < einkCorrectTrueWidth && inputRectHeight < einkCorrectTrueHeight) {
+                            float widthScale = inputRectWidth * 1.0f / einkCorrectTrueWidth;
+                            float heightScale = inputRectHeight * 1.0f / einkCorrectTrueHeight;
+                            if (widthScale > heightScale) {
+
+                            }
+                        } else if (inputRectWidth < einkCorrectTrueWidth) {//图片的宽度大于批阅框的宽度
+                            float widthScale = inputRectWidth * 1.0f / einkCorrectTrueWidth;
+                            inputRect.setExamInputImageRectF(new RectF(inputRect.getLeft(), inputRect.getTop(), inputRect.getLeft() + inputRectWidth, inputRect.getTop() + widthScale * einkCorrectTrueHeight));
+                        } else if (inputRectHeight < einkCorrectTrueHeight) {
+                            float heightScale = inputRectHeight * 1.0f / einkCorrectTrueHeight;
+                            inputRect.setExamInputImageRectF(new RectF(inputRect.getLeft(), inputRect.getTop(), inputRect.getLeft() + heightScale * einkCorrectTrueWidth, inputRect.getTop() + inputRectHeight));
+                        }else {
+                            inputRect.setExamInputImageRectF(new RectF(inputRect.getLeft()+ (inputRectWidth - einkCorrectTrueWidth)*1.0f /2, inputRect.getTop() + (inputRectHeight - einkCorrectTrueHeight) *1.0f/ 2 , inputRect.getLeft() + inputRectWidth - einkCorrectTrueWidth*1.0f /2, inputRect.getTop() + inputRectHeight - einkCorrectTrueHeight *1.0f/2));
+                        }
                     }
                     paperListBean.setInputRects(inputRects);
                     if (configureObject.getLayers().size() == 1) {
                         paperListBean.setStudentAnswerImagePath(
                                 EinkFileUtils.getPath(taskId,
-                                        "notebooks/"+noteBookObject.getNotepages().get(index).getNotebookId()+"/pages/"+noteBookObject.getNotepages().get(index).getNotepageId()+"/"+configureObject.getLayers().get(0).getLayerName()+"/note.png","unzip"));
+                                        "notebooks/" + noteBookObject.getNotepages().get(index).getNotebookId() + "/pages/" + noteBookObject.getNotepages().get(index).getNotepageId() + "/" + configureObject.getLayers().get(0).getLayerName() + "/note.png", "unzip"));
                         paperListBean.setTeacherCorrectBitmap(BitmapFactory.decodeResource(BaseApplication.instance.getResources(), R.mipmap.aab));
                     } else if (configureObject.getLayers().size() == 2) {
                         paperListBean.setStudentAnswerImagePath(EinkFileUtils.getPath(taskId,
-                                "notebooks/"+noteBookObject.getNotepages().get(index).getNotebookId()+"/pages/"+noteBookObject.getNotepages().get(index).getNotepageId()+"/"+configureObject.getLayers().get(0).getLayerName()+"/note.png", "unzip"));
+                                "notebooks/" + noteBookObject.getNotepages().get(index).getNotebookId() + "/pages/" + noteBookObject.getNotepages().get(index).getNotepageId() + "/" + configureObject.getLayers().get(0).getLayerName() + "/note.png", "unzip"));
                         String bt = EinkFileUtils.getPath(taskId,
-                                "notebooks/"+noteBookObject.getNotepages().get(index).getNotebookId()+"/pages/"+noteBookObject.getNotepages().get(index).getNotepageId()+"/"+configureObject.getLayers().get(1).getLayerName()+"/note.png", "unzip");
+                                "notebooks/" + noteBookObject.getNotepages().get(index).getNotebookId() + "/pages/" + noteBookObject.getNotepages().get(index).getNotepageId() + "/" + configureObject.getLayers().get(1).getLayerName() + "/note.png", "unzip");
                         paperListBean.setTeacherCorrectImagePath(bt);
                         paperListBean.setTeacherCorrectBitmap(BitmapFactory.decodeFile(bt));
                     }
@@ -110,9 +156,11 @@ public class ListPresenter {
             }
         });
     }
-    public interface ResultListener{
+
+    public interface ResultListener {
         void result(ArrayList<EinkHomeworkViewBean.PaperListBean> result);
     }
+
     private String inputsRectStr = "[\n" +
             "    {\n" +
             "        \"examId\": \"708533208924295168\",\n" +

@@ -1,6 +1,7 @@
 package com.tbright.sketchpad.listactivity.bean;
 
 import android.graphics.Bitmap;
+import android.graphics.RectF;
 
 import java.util.List;
 
@@ -54,6 +55,33 @@ public class EinkHomeworkViewBean {
         private String studentAnswerImagePath;
         private String teacherCorrectImagePath;
         private List<InputRectsBean> inputRects;
+        private double zoom;//缩放比例
+        private int studentAnswerDeviceWidth;//学生作答的设备宽度
+        private int studentAnswerDeviceHeight;//学生作答的设备高度
+
+        public double getZoom() {
+            return zoom;
+        }
+
+        public void setZoom(double zoom) {
+            this.zoom = zoom;
+        }
+
+        public int getStudentAnswerDeviceWidth() {
+            return studentAnswerDeviceWidth;
+        }
+
+        public void setStudentAnswerDeviceWidth(int studentAnswerDeviceWidth) {
+            this.studentAnswerDeviceWidth = studentAnswerDeviceWidth;
+        }
+
+        public int getStudentAnswerDeviceHeight() {
+            return studentAnswerDeviceHeight;
+        }
+
+        public void setStudentAnswerDeviceHeight(int studentAnswerDeviceHeight) {
+            this.studentAnswerDeviceHeight = studentAnswerDeviceHeight;
+        }
 
         public Bitmap getTeacherCorrectBitmap() {
             return teacherCorrectBitmapTemp;
@@ -121,7 +149,6 @@ public class EinkHomeworkViewBean {
              * top : 359
              * width : 176
              */
-
             private String examId;
             private String examInputId;
             private String exampaperId;
@@ -137,6 +164,52 @@ public class EinkHomeworkViewBean {
             private int rectType;
             private int top;
             private int width;
+
+            private RectF examInputRectF;//老师批阅框的坐标
+            private RectF examInputImageRectF;//老师批阅对错图片的位置
+            private int isRight;//有没有批阅的标识
+            private String score;//当前得分
+            private String fullScore;//满分
+
+            public int getIsRight() {
+                return isRight;
+            }
+
+            public void setIsRight(int isRight) {
+                this.isRight = isRight;
+            }
+
+            public String getScore() {
+                return score;
+            }
+
+            public void setScore(String score) {
+                this.score = score;
+            }
+
+            public String getFullScore() {
+                return fullScore;
+            }
+
+            public void setFullScore(String fullScore) {
+                this.fullScore = fullScore;
+            }
+
+            public RectF getExamInputImageRectF() {
+                return examInputImageRectF;
+            }
+
+            public void setExamInputImageRectF(RectF examInputImageRectF) {
+                this.examInputImageRectF = examInputImageRectF;
+            }
+
+            public RectF getExamInputRectF() {
+                return examInputRectF;
+            }
+
+            public void setExamInputRectF(RectF examInputRectF) {
+                this.examInputRectF = examInputRectF;
+            }
 
             public String getExamId() {
                 return examId;
