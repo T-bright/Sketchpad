@@ -59,14 +59,11 @@ public class TestView extends FrameLayout {
     private void init(Context context) {
         containView = LayoutInflater.from(context).inflate(R.layout.item_eink_homework, null);
         addView(containView, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        flItemRoot = (FrameLayout)containView.findViewById(R.id.flItemRoot);
+        flItemRoot = (FrameLayout) containView.findViewById(R.id.flItemRoot);
         ivExamImageView = (ImageView) containView.findViewById(R.id.ivExamImageView);
         ivStudentImageView = (ImageView) containView.findViewById(R.id.ivStudentImageView);
         einkHomeworkView = (SketchView) containView.findViewById(R.id.einkHomeworkView);
     }
-
-    //是不是多手指触摸屏幕
-    private boolean isMoreFingers = false;
     //记录位置
     private int mLastX;
     private int mLastY;
@@ -81,51 +78,60 @@ public class TestView extends FrameLayout {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getPointerCount() >= 2) {//手指大于等于2，通知父类不要拦截事件
+            isInterceptParentTouchEvent(true);
+        }
+        if (currentMode == EinkHomeworkView.CORRECT_MODE || currentMode == EinkHomeworkView.RASURE_MODE) {//手绘模式或者擦除模式，通知父类不要拦截事件
+            isInterceptParentTouchEvent(true);
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    /**
+     * 拦截 拦截之后交给onTouchEvent处理
+     * 拦截的情况：只有在双手处理缩放的情况下，拦截事件，处理缩放手势
+     * 不拦截的情况：
+     */
+
+    //是否拦截事件
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if (ev.getPointerCount() >= 2) {//手指大于等于2，拦截事件
+            return true;
+        }
+        return super.onInterceptTouchEvent(ev);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
         switch (ev.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 mLastX = (int) ev.getX();
                 mLastY = (int) ev.getY();
-                if (ev.getPointerCount() == 1 && (currentMode == EinkHomeworkView.CORRECT_MODE || currentMode == EinkHomeworkView.RASURE_MODE)) {
-                    isInterceptParentTouchEvent(true);
-                    return einkHomeworkView.onTouchEvent(ev);
-                }
             case MotionEvent.ACTION_POINTER_DOWN:
-                if (ev.getPointerCount() > 1) {
-                    mOldDistance = spacingOfTwoFinger(ev);
-                    mOldPointer = middleOfTwoFinger(ev);
-                    isMoreFingers = true;
-                    isInterceptParentTouchEvent(true);
-                }
+                mOldDistance = spacingOfTwoFinger(ev);
+                mOldPointer = middleOfTwoFinger(ev);
+                Log.e("BBB", "ACTION_POINTER_DOWN :" +mOldDistance);
                 break;
             case MotionEvent.ACTION_MOVE:
-                //一个手指，在EinkHomeworkView.MOVE_MODE情况下，滑动，否则事件给EinkHomeworkView
-                if (!isMoreFingers) {
-                    if (currentMode == EinkHomeworkView.MOVE_MODE) {//移动
-                        containView.setX(containView.getX() + ev.getX() - mLastX);
-                        containView.setY(containView.getY() + ev.getY() - mLastY);
-                        mLastX = (int) ev.getX();
-                        mLastY = (int) ev.getY();
-                        isInterceptParentTouchEvent(false);
-                        checkingBorder();
-                    } else {
-                        isInterceptParentTouchEvent(true);
-                        return einkHomeworkView.onTouchEvent(ev);
-                    }
-                } else if (ev.getPointerCount() == 2) {
+                if (ev.getPointerCount() == 2) {
                     //两个或以上手指的时候，放大、缩小、滑动
-                    isInterceptParentTouchEvent(true);
                     try {
                         PointF mNewPointer = middleOfTwoFinger(ev);
-
                         float newDistance = spacingOfTwoFinger(ev);
-                        scaleFactor = newDistance / mOldDistance;
+                        if (mOldDistance == 0) {
+                            scaleFactor = 1.0f;
+                        } else {
+                            scaleFactor = newDistance / mOldDistance;
+                        }
                         scaleFactor = checkingScale(containView.getScaleX(), scaleFactor);
                         containView.setScaleX(containView.getScaleX() * scaleFactor);
                         containView.setScaleY(containView.getScaleY() * scaleFactor);
                         containView.setPivotX(mNewPointer.x);
                         containView.setPivotY(mNewPointer.y);
                         mOldDistance = newDistance;
-
+                        Log.e("AA", "x :" + (mNewPointer.x - mOldPointer.x));
+                        Log.e("AA", "y :" + (mNewPointer.y - mOldPointer.y));
                         containView.setX(containView.getX() + mNewPointer.x - mOldPointer.x);
                         containView.setY(containView.getY() + mNewPointer.y - mOldPointer.y);
                         mOldPointer = mNewPointer;
@@ -136,15 +142,11 @@ public class TestView extends FrameLayout {
                 }
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                if (ev.getPointerCount() == 1) {
-                    isMoreFingers = false;
-                }
+
                 break;
             case MotionEvent.ACTION_UP:
-                isMoreFingers = false;
                 containView.getMatrix().getValues(mMatrixValus);
                 einkHomeworkView.setScaleAndOffset(containView.getScaleX(), mMatrixValus[2], mMatrixValus[5]);
-//                isInterceptParentTouchEvent(false);
                 break;
         }
         return true;
@@ -251,7 +253,7 @@ public class TestView extends FrameLayout {
 
             FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) flItemRoot.getLayoutParams();
             layoutParams.width = (int) screenWidth;// 1.1435f为zoom值
-            layoutParams.height = (int) (studentHeight  * scale);// 1.1435f为zoom值
+            layoutParams.height = (int) (studentHeight * scale);// 1.1435f为zoom值
             flItemRoot.setLayoutParams(layoutParams);
 
             ivExamImageView.setImageBitmap(examPaperBitmap);
@@ -259,7 +261,8 @@ public class TestView extends FrameLayout {
         }
         einkHomeworkView.addBitmap(paperListBean);
     }
-    public void setOnClickCorrectRectListener(SketchView.OnClickCorrectRectListener onClickCorrectRectListener){
+
+    public void setOnClickCorrectRectListener(SketchView.OnClickCorrectRectListener onClickCorrectRectListener) {
         einkHomeworkView.setOnClickCorrectRectListener(onClickCorrectRectListener);
     }
 }
